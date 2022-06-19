@@ -1,19 +1,22 @@
 import argparse
 import pathlib
 import time
+import os
+import random
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from datasets.solidletters import SolidLetters
+# from datasets.solidletters import SolidLetters
+from datasets.assemblybodies import AssemblyBodies
 from uvnet.models import Classification
 
 parser = argparse.ArgumentParser("UV-Net solid model classification")
 parser.add_argument(
     "traintest", choices=("train", "test"), help="Whether to train or test"
 )
-parser.add_argument("--dataset", choices=("solidletters",), help="Dataset to train on")
+parser.add_argument("--dataset", choices=("assembly_bodies",), help="Dataset to train on")
 parser.add_argument("--dataset_path", type=str, help="Path to dataset")
 parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
 parser.add_argument(
@@ -63,8 +66,8 @@ trainer = Trainer.from_argparse_args(
     ),
 )
 
-if args.dataset == "solidletters":
-    Dataset = SolidLetters
+if args.dataset == "assembly_bodies":
+    Dataset = AssemblyBodies
 else:
     raise ValueError("Unsupported dataset")
 
@@ -85,7 +88,37 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
 -----------------------------------------------------------------------------------
     """
     )
+
     model = Classification(num_classes=Dataset.num_classes())
+
+    ##########################################################################
+    """Generating our own train.txt and test.txt (randomly)"""
+
+    train_percentage = 0.8
+
+    all_bins = os.listdir(args.dataset_path)
+    for i in range(len(all_bins)):
+        all_bins[i] = all_bins[i].split(".bin")[0]
+
+    random.shuffle(all_bins)
+    train_bins = all_bins[:int(len(all_bins) * train_percentage)]
+    test_bins = all_bins[int(len(all_bins) * train_percentage):]
+
+    with open(args.dataset_path + "/train.txt", "w") as f:
+        for line in train_bins:
+            f.write(str(line) + '\n')
+
+    with open(args.dataset_path + "/test.txt", "w") as f:
+        for line in test_bins:
+            f.write(str(line) + '\n')
+
+    print("Total number of samples:", len(all_bins))
+    print("Total number of training samples:", len(train_bins))
+    print("Total number of testing samples:", len(test_bins))
+    print("-----------------------------------------------------------------------------------")
+
+    ##########################################################################
+
     train_data = Dataset(root_dir=args.dataset_path, split="train")
     val_data = Dataset(root_dir=args.dataset_path, split="val")
     train_loader = train_data.get_dataloader(
@@ -94,11 +127,13 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
     val_loader = val_data.get_dataloader(
         batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
+
     trainer.fit(model, train_loader, val_loader)
+
 else:
     # Test
     assert (
-        args.checkpoint is not None
+            args.checkpoint is not None
     ), "Expected the --checkpoint argument to be provided"
     test_data = Dataset(root_dir=args.dataset_path, split="test")
     test_loader = test_data.get_dataloader(
@@ -106,6 +141,7 @@ else:
     )
     model = Classification.load_from_checkpoint(args.checkpoint)
     results = trainer.test(model=model, test_dataloaders=[test_loader], verbose=False)
-    print(
-        f"Classification accuracy (%) on test set: {results[0]['test_acc_epoch'] * 100.0}"
-    )
+    print("Classification results on test set:", results)
+    # print(
+    #     f"Classification accuracy (%) on test set: {results[0]['test_acc_epoch'] * 100.0}"
+    # )

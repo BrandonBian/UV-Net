@@ -1,9 +1,13 @@
+# Customized directories
+*/results
+*/graphs
+commands.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-*/results
 # C extensions
 *.so
 

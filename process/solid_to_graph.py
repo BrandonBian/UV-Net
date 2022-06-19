@@ -2,6 +2,7 @@ import argparse
 import pathlib
 
 import dgl
+import os
 import numpy as np
 import torch
 from occwl.graph import face_adjacency
@@ -66,14 +67,24 @@ def build_graph(solid, curv_num_u_samples, surf_num_u_samples, surf_num_v_sample
 def process_one_file(fn, args):
     fn_stem = fn.stem
     output_path = pathlib.Path(args.output)
+
+    existing_files = os.listdir(output_path)
+
+    if (fn_stem + ".bin") in existing_files:
+        # skipping graphs that are already generated
+        return
+
     try:
         solid = load_step(fn)[0]  # Assume there's one solid per file
+
+        graph = build_graph(
+            solid, args.curv_u_samples, args.surf_u_samples, args.surf_v_samples
+        )
+
     except:
-        print(f"WARNING: error loading file '{fn}'!")
+        print(f"WARNING: error processing file '{fn}', skipped!")
         return
-    graph = build_graph(
-        solid, args.curv_u_samples, args.surf_u_samples, args.surf_v_samples
-    )
+
     dgl.data.utils.save_graphs(str(output_path.joinpath(fn_stem + ".bin")), [graph])
 
 
