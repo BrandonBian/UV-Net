@@ -23,9 +23,11 @@ def bounding_box_pointcloud(pts: torch.Tensor):
 
 def bounding_box_uvsolid(inp: torch.Tensor):
     pts = inp[:, :, :, :3].reshape((-1, 3))
+
     mask = inp[:, :, :, 6].reshape(-1)
     point_indices_inside_faces = mask == 1
     pts = pts[point_indices_inside_faces, :]
+
     return bounding_box_pointcloud(pts)
 
 
@@ -42,9 +44,11 @@ def plot_uvsolid(uvsolid: torch.Tensor, ax, normals=False):
     for i in range(num_faces):
         pts = uvsolid[i, :, :, :3].cpu().detach().numpy().reshape((-1, 3))
         nor = uvsolid[i, :, :, 3:6].cpu().detach().numpy().reshape((-1, 3))
+
         mask = uvsolid[i, :, :, 6].cpu().detach().numpy().reshape(-1)
         point_indices_inside_faces = mask == 1
         pts = pts[point_indices_inside_faces, :]
+
         if normals:
             nor = nor[point_indices_inside_faces, :]
             ax.quiver(
@@ -116,7 +120,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Visualize UV-grids and face adj graphs for testing"
     )
-    parser.add_argument("dir", type=str, default=None, help="Directory of bin files")
+    parser.add_argument("--dir", type=str, default="./results", help="Directory of bin files")
     parser.add_argument(
         "--hide_plots",
         action="store_true",

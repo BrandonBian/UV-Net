@@ -27,11 +27,13 @@ def build_graph(solid, curv_num_u_samples, surf_num_u_samples, surf_num_v_sample
             face, method="normal", num_u=surf_num_u_samples, num_v=surf_num_v_samples
         )
         mask = uvgrid(
-            face, method="trimmed", num_u=surf_num_u_samples, num_v=surf_num_v_samples
+            face, method="inside", num_u=surf_num_u_samples, num_v=surf_num_v_samples
         )
         mask = mask != 1
+
         # Concatenate channel-wise to form face feature tensor
         face_feat = np.concatenate((points, normals, mask), axis=-1)
+
         graph_face_feat.append(face_feat)
     graph_face_feat = np.asarray(graph_face_feat)
 
@@ -64,7 +66,11 @@ def build_graph(solid, curv_num_u_samples, surf_num_u_samples, surf_num_v_sample
 def process_one_file(fn, args):
     fn_stem = fn.stem
     output_path = pathlib.Path(args.output)
-    solid = load_step(fn)[0]  # Assume there's one solid per file
+    try:
+        solid = load_step(fn)[0]  # Assume there's one solid per file
+    except:
+        print(f"WARNING: error loading file '{fn}'!")
+        return
     graph = build_graph(
         solid, args.curv_u_samples, args.surf_u_samples, args.surf_v_samples
     )
@@ -82,8 +88,8 @@ def main():
     parser = argparse.ArgumentParser(
         "Convert solid models to face-adjacency graphs with UV-grid features"
     )
-    parser.add_argument("input", type=str, help="Input folder of STEP files")
-    parser.add_argument("output", type=str, help="Output folder of DGL graph BIN files")
+    parser.add_argument("--input", type=str, help="Input folder of STEP files")
+    parser.add_argument("--output", type=str, help="Output folder of DGL graph BIN files")
     parser.add_argument(
         "--curv_u_samples", type=int, default=10, help="Number of samples on each curve"
     )
@@ -100,6 +106,7 @@ def main():
         help="Number of samples on each surface along the v-direction",
     )
     args = parser.parse_args()
+
     process(args)
 
 
