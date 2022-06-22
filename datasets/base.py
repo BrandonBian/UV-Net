@@ -24,6 +24,9 @@ class BaseDataset(Dataset):
             if sample["graph"].edata["x"].size(0) == 0:
                 # Catch the case of graphs with no edges
                 continue
+            if dgl.DGLGraph.number_of_nodes(sample["graph"]) > 150:
+                # Skip graphs that have too many nodes
+                continue
             self.data.append(sample)
         if center_and_scale:
             self.center_and_scale()

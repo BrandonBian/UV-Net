@@ -4,13 +4,19 @@ import time
 import os
 import random
 
+import torch
+import gc
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.metrics import ConfusionMatrix
 
 # from datasets.solidletters import SolidLetters
 from datasets.assemblybodies import AssemblyBodies
 from uvnet.models import Classification
+
+gc.collect()
+torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser("UV-Net solid model classification")
 parser.add_argument(
@@ -64,6 +70,7 @@ trainer = Trainer.from_argparse_args(
     logger=TensorBoardLogger(
         str(results_path), name=month_day, version=hour_min_second,
     ),
+    accumulate_grad_batches=32,
 )
 
 if args.dataset == "assembly_bodies":
@@ -89,33 +96,44 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
     """
     )
 
-    model = Classification(num_classes=Dataset.num_classes())
+    continued_training = False
+
+    if args.checkpoint:
+        print("Loading from previous checkpoint - continuing previous training")
+        model = Classification.load_from_checkpoint(args.checkpoint)
+        continued_training = True
+    else:
+        model = Classification(num_classes=Dataset.num_classes())
 
     ##########################################################################
     """Generating our own train.txt and test.txt (randomly)"""
 
-    train_percentage = 0.8
+    if not continued_training:
+        train_percentage = 0.8
 
-    all_bins = os.listdir(args.dataset_path)
-    for i in range(len(all_bins)):
-        all_bins[i] = all_bins[i].split(".bin")[0]
+        all_bins = os.listdir(args.dataset_path)
+        for i in range(len(all_bins)):
+            all_bins[i] = all_bins[i].split(".bin")[0]
 
-    random.shuffle(all_bins)
-    train_bins = all_bins[:int(len(all_bins) * train_percentage)]
-    test_bins = all_bins[int(len(all_bins) * train_percentage):]
+        random.shuffle(all_bins)
+        train_bins = all_bins[:int(len(all_bins) * train_percentage)]
+        test_bins = all_bins[int(len(all_bins) * train_percentage):]
 
-    with open(args.dataset_path + "/train.txt", "w") as f:
-        for line in train_bins:
-            f.write(str(line) + '\n')
+        with open(args.dataset_path + "/train.txt", "w") as f:
+            for line in train_bins:
+                f.write(str(line) + '\n')
 
-    with open(args.dataset_path + "/test.txt", "w") as f:
-        for line in test_bins:
-            f.write(str(line) + '\n')
+        with open(args.dataset_path + "/test.txt", "w") as f:
+            for line in test_bins:
+                f.write(str(line) + '\n')
 
-    print("Total number of samples:", len(all_bins))
-    print("Total number of training samples:", len(train_bins))
-    print("Total number of testing samples:", len(test_bins))
-    print("-----------------------------------------------------------------------------------")
+        print("Total number of samples:", len(all_bins))
+        print("Total number of training samples:", len(train_bins))
+        print("Total number of testing samples:", len(test_bins))
+        print("-----------------------------------------------------------------------------------")
+
+    else:
+        print("Utilizing the train-test split from previous experiment")
 
     ##########################################################################
 
@@ -128,20 +146,24 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
         batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
 
-    trainer.fit(model, train_loader, val_loader)
+    trainer.fit(model=model, train_dataloader=train_loader, val_dataloaders=val_loader)
 
 else:
     # Test
     assert (
             args.checkpoint is not None
     ), "Expected the --checkpoint argument to be provided"
+
     test_data = Dataset(root_dir=args.dataset_path, split="test")
     test_loader = test_data.get_dataloader(
         batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
+
     model = Classification.load_from_checkpoint(args.checkpoint)
-    results = trainer.test(model=model, test_dataloaders=[test_loader], verbose=False)
-    print("Classification results on test set:", results)
-    # print(
-    #     f"Classification accuracy (%) on test set: {results[0]['test_acc_epoch'] * 100.0}"
-    # )
+    test_acc = trainer.test(model=model, test_dataloaders=test_loader, verbose=True)
+    # test_results = trainer.predict(model=model, dataloaders=test_loader)
+
+    # for batch in test_loader:
+    #     print(batch)
+
+    # print("Classification results on test set:", results)

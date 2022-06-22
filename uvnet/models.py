@@ -105,6 +105,10 @@ class UVNetClassifier(nn.Module):
             torch.tensor: Logits (batch_size x num_classes)
         """
         # Input features
+        # try:
+        #     batched_graph = batched_graph["graph"]
+        # except:
+        #     pass
         input_crv_feat = batched_graph.edata["x"]
         input_srf_feat = batched_graph.ndata["x"]
         # Compute hidden edge and face features

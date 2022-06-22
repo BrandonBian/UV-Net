@@ -2,6 +2,7 @@ import pathlib
 import string
 
 import torch
+import dgl
 from sklearn.model_selection import train_test_split
 
 from datasets.base import BaseDataset
@@ -16,6 +17,7 @@ LABEL_MAPPING = {
     "Plastic": 6,
     "Wood": 7
 }
+
 
 def _get_filenames(root_dir, filelist):
     with open(str(root_dir / f"{filelist}"), "r") as f:
@@ -56,7 +58,6 @@ class AssemblyBodies(BaseDataset):
             center_and_scale (bool, optional): Whether to center and scale the solid. Defaults to True.
             random_rotate (bool, optional): Whether to apply random rotations to the solid in 90 degree increments. Defaults to False.
         """
-        assert split in ("train", "val", "test")
         path = pathlib.Path(root_dir)
 
         self.random_rotate = random_rotate
@@ -65,18 +66,22 @@ class AssemblyBodies(BaseDataset):
         if split in ("train", "val"):
             file_paths = _get_filenames(path, filelist="train.txt")
 
-            # self.label_set = set([str(fn).split("_sep_")[0].split('\\')[-1] for fn in file_paths])
-
             labels = [to_label(fn) for fn in file_paths]
             train_files, val_files = train_test_split(
                 file_paths, test_size=0.2, random_state=42, stratify=labels,
             )
+
             if split == "train":
                 file_paths = train_files
             elif split == "val":
                 file_paths = val_files
+
         elif split == "test":
             file_paths = _get_filenames(path, filelist="test.txt")
+
+        else:
+            print("ERROR: incorrect split!")
+            exit(1)
 
         print(f"Loading {split} data...")
         self.load_graphs(file_paths, center_and_scale)
