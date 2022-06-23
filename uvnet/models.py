@@ -107,6 +107,8 @@ class UVNetClassifier(nn.Module):
         # Input features
         # try:
         #     batched_graph = batched_graph["graph"]
+        #     batched_graph.edata["x"] = batched_graph.edata["x"].permute(0, 2, 1)
+        #     batched_graph.ndata["x"] = batched_graph.ndata["x"].permute(0, 3, 1, 2)
         # except:
         #     pass
         input_crv_feat = batched_graph.edata["x"]
@@ -179,6 +181,9 @@ class Classification(pl.LightningModule):
         self.log("test_loss", loss, on_step=False, on_epoch=True)
         preds = F.softmax(logits, dim=-1)
         self.log("test_acc", self.test_acc(preds, labels), on_step=False, on_epoch=True)
+        preds = torch.argmax(preds, dim=-1)
+
+        return preds, labels
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters())

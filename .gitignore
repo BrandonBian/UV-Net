@@ -2,6 +2,7 @@
 */results
 */graphs
 commands.txt
+confusion_matrix.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

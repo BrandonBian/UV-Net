@@ -6,10 +6,16 @@ import random
 
 import torch
 import gc
+import numpy
+import matplotlib.pyplot as plt
+import seaborn as sn
+
+from tqdm import tqdm
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.metrics import ConfusionMatrix
+from sklearn.metrics import classification_report, confusion_matrix
 
 # from datasets.solidletters import SolidLetters
 from datasets.assemblybodies import AssemblyBodies
@@ -160,10 +166,43 @@ else:
     )
 
     model = Classification.load_from_checkpoint(args.checkpoint)
-    test_acc = trainer.test(model=model, test_dataloaders=test_loader, verbose=True)
-    # test_results = trainer.predict(model=model, dataloaders=test_loader)
 
-    # for batch in test_loader:
-    #     print(batch)
+    """Testing"""
+    # trainer.test(model=model, test_dataloaders=[test_loader], verbose=True)
 
+    """Predictions - Classification Report & Confusion Matrix"""
+
+    predictions, ground_truths = [], []
+
+    model.eval()
+    with torch.no_grad():
+        for batch in tqdm(test_loader, desc="Inference on test loader"):
+            preds, labels = model.test_step(batch, None)
+            preds = preds.tolist()
+            labels = labels.tolist()
+            predictions.append(preds)
+            ground_truths.append(labels)
+
+    predictions = list(numpy.concatenate(predictions).flat)
+    ground_truths = list(numpy.concatenate(ground_truths).flat)
+
+    print(classification_report(y_pred=predictions, y_true=ground_truths))
+    cf = confusion_matrix(y_pred=predictions, y_true=ground_truths, normalize="true")
+    plt.figure(figsize=(24, 18))
+
+    label = ["Metal_Aluminum",
+             "Metal_Ferrous",
+             "Metal_Ferrous_Steel",
+             "Metal_Non-Ferrous",
+             "Other",
+             "Paint",
+             "Plastic",
+             "Wood"]
+
+    sn.heatmap(cf, annot=True, fmt='.2f', cmap='Blues', xticklabels=label, yticklabels=label, annot_kws={"size": 25})
+    plt.xticks(size='xx-large', rotation=45)
+    plt.yticks(size='xx-large', rotation=45)
+    plt.tight_layout()
+
+    plt.savefig(fname=f'confusion_matrix.png', format='png')
     # print("Classification results on test set:", results)
