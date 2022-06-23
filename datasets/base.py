@@ -14,6 +14,7 @@ class BaseDataset(Dataset):
         pass
 
     def load_graphs(self, file_paths, center_and_scale=True):
+        no_edge, too_many_nodes = 0, 0
         self.data = []
         for fn in tqdm(file_paths):
             if not fn.exists():
@@ -23,14 +24,17 @@ class BaseDataset(Dataset):
                 continue
             if sample["graph"].edata["x"].size(0) == 0:
                 # Catch the case of graphs with no edges
+                no_edge += 1
                 continue
             if dgl.DGLGraph.number_of_nodes(sample["graph"]) > 150:
                 # Skip graphs that have too many nodes
+                too_many_nodes += 1
                 continue
             self.data.append(sample)
         if center_and_scale:
             self.center_and_scale()
         self.convert_to_float32()
+        print(f"Number of graphs skipped (no edge + too many nodes): {no_edge} + {too_many_nodes} / {len(file_paths)}")
     
     def load_one_graph(self, file_path):
         graph = load_graphs(str(file_path))[0][0]
