@@ -1,8 +1,9 @@
 # Customized directories
 */results
 */graphs
-commands.txt
-confusion_matrix.png
+*.png
+*.csv
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

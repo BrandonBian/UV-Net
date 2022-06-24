@@ -79,6 +79,9 @@ class AssemblyBodies(BaseDataset):
         elif split == "test":
             file_paths = _get_filenames(path, filelist="test.txt")
 
+        elif split == "train_val":
+            file_paths = _get_filenames(path, filelist="train.txt")
+
         else:
             print("ERROR: incorrect split!")
             exit(1)

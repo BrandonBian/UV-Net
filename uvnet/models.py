@@ -105,12 +105,6 @@ class UVNetClassifier(nn.Module):
             torch.tensor: Logits (batch_size x num_classes)
         """
         # Input features
-        # try:
-        #     batched_graph = batched_graph["graph"]
-        #     batched_graph.edata["x"] = batched_graph.edata["x"].permute(0, 2, 1)
-        #     batched_graph.ndata["x"] = batched_graph.ndata["x"].permute(0, 3, 1, 2)
-        # except:
-        #     pass
         input_crv_feat = batched_graph.edata["x"]
         input_srf_feat = batched_graph.ndata["x"]
         # Compute hidden edge and face features
@@ -123,7 +117,36 @@ class UVNetClassifier(nn.Module):
         )
         # Map to logits
         out = self.clf(graph_emb)
+        # print(graph_emb)
+        # print(graph_emb.shape) # 64 x 128
+        # print(out.shape) # 64 x 8
+
         return out
+
+    def embeddings(self, batched_graph):
+        """
+        Obtain graph embeddings (just like previous "forward" function, but returning "graph_emb" instead of "out")
+
+        Args:
+            batched_graph (dgl.Graph): A batched DGL graph containing the face 2D UV-grids in node features
+                                       (ndata['x']) and 1D edge UV-grids in the edge features (edata['x']).
+
+        Returns:
+            torch.tensor: Graph/Node Embeddings (batch_size x graph_emb_dim)
+        """
+        # Input features
+        input_crv_feat = batched_graph.edata["x"]
+        input_srf_feat = batched_graph.ndata["x"]
+        # Compute hidden edge and face features
+        hidden_crv_feat = self.curv_encoder(input_crv_feat)
+        hidden_srf_feat = self.surf_encoder(input_srf_feat)
+        # Message pass and compute per-face(node) and global embeddings
+        # Per-face embeddings are ignored during solid classification
+        _, graph_emb = self.graph_encoder(
+            batched_graph, hidden_srf_feat, hidden_crv_feat
+        )
+
+        return graph_emb
 
 
 class Classification(pl.LightningModule):
@@ -189,6 +212,15 @@ class Classification(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters())
         return optimizer
 
+    def test_embeddings(self, batch):
+        inputs = batch["graph"].to(self.device)
+        labels = batch["label"].to(self.device)
+        file_names = batch["filename"]
+        inputs.ndata["x"] = inputs.ndata["x"].permute(0, 3, 1, 2)
+        inputs.edata["x"] = inputs.edata["x"].permute(0, 2, 1)
+        embeddings = self.model.embeddings(inputs)
+
+        return file_names, embeddings
 
 ###############################################################################
 # Segmentation model
