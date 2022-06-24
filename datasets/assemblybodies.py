@@ -33,7 +33,7 @@ def _get_filenames(root_dir, filelist):
 
 
 def to_label(string):
-    label = str(string).split("_sep_")[0].split('\\')[-1]
+    label = str(string).split('\\')[-1].split("_sep_")[0]
     return LABEL_MAPPING[label]
 
 
