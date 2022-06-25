@@ -110,7 +110,7 @@ if __name__ == "__main__":
     model = Classification.load_from_checkpoint(args.checkpoint)
 
     """Predictions - Generating Body Embeddings"""
-    output_dir = "embeddings.csv"
+    output_dir = "UV_embeddings.csv"
     if os.path.exists(output_dir):
         os.remove(output_dir)
     df = pd.DataFrame(list(), columns=["assembly_id", "body_id", "split", "embeddings"])

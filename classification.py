@@ -21,6 +21,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 from datasets.assemblybodies import AssemblyBodies
 from uvnet.models import Classification
 
+random.seed(7)
+
 gc.collect()
 torch.cuda.empty_cache()
 
@@ -31,6 +33,7 @@ parser.add_argument(
 parser.add_argument("--dataset", choices=("assembly_bodies",), help="Dataset to train on")
 parser.add_argument("--dataset_path", type=str, help="Path to dataset")
 parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
+parser.add_argument("--fixed_split", type=bool, default=False, help="Fixed train-test split")
 parser.add_argument(
     "--num_workers",
     type=int,
@@ -115,15 +118,61 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
     """Generating our own train.txt and test.txt (randomly)"""
 
     if not continued_training:
-        train_percentage = 0.8
+        train_bins, test_bins = [], []
 
-        all_bins = os.listdir(args.dataset_path)
-        for i in range(len(all_bins)):
-            all_bins[i] = all_bins[i].split(".bin")[0]
+        if args.fixed_split:
+            print("Utilizing pre-defined fixed train test split")
+            # use pre-defined and fixed train-test split from dataset
+            with open(args.dataset_path + '\\' + "assemblies_train_val.txt") as f:
+                lines = f.readlines()
+                assemblies_train_val = [line.strip() for line in lines]
 
-        random.shuffle(all_bins)
-        train_bins = all_bins[:int(len(all_bins) * train_percentage)]
-        test_bins = all_bins[int(len(all_bins) * train_percentage):]
+            with open(args.dataset_path + '\\' + "assemblies_test.txt") as f:
+                lines = f.readlines()
+                assemblies_test = [line.strip() for line in lines]
+
+            with open(args.dataset_path + '\\' + "bodies_train_val.txt") as f:
+                lines = f.readlines()
+                bodies_train_val = [line.strip() for line in lines]
+
+            with open(args.dataset_path + '\\' + "bodies_test.txt") as f:
+                lines = f.readlines()
+                bodies_test = [line.strip() for line in lines]
+
+            all_bins = os.listdir(args.dataset_path)
+            for i in range(len(all_bins)):
+                all_bins[i] = all_bins[i].split(".bin")[0]
+
+            for bin in all_bins:
+                if ".txt" in bin:
+                    continue
+                assembly_id = bin.split("_sep_")[1]
+                body_id = bin.split("_sep_")[2]
+
+                if assembly_id in assemblies_train_val and body_id in bodies_train_val:
+                    train_bins.append(bin)
+                elif assembly_id in assemblies_test and body_id in bodies_test:
+                    test_bins.append(bin)
+                else:
+                    print(bin)
+                    print("Unexpected split: no graph in train should have any of its bodies in test, vice versa")
+                    exit(1)
+
+            random.shuffle(train_bins)
+            random.shuffle(test_bins)
+
+        else:
+            # randomly perform train-test split (8:2)
+            print("Shuffling the dataset to create randomized train test split")
+            train_percentage = 0.8
+
+            all_bins = os.listdir(args.dataset_path)
+            for i in range(len(all_bins)):
+                all_bins[i] = all_bins[i].split(".bin")[0]
+
+            random.shuffle(all_bins)
+            train_bins = all_bins[:int(len(all_bins) * train_percentage)]
+            test_bins = all_bins[int(len(all_bins) * train_percentage):]
 
         with open(args.dataset_path + "/train.txt", "w") as f:
             for line in train_bins:
@@ -139,7 +188,7 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
         print("-----------------------------------------------------------------------------------")
 
     else:
-        print("Utilizing the train-test split from previous experiment")
+        print("Utilizing the train-test split from previous experiment (for continued training)")
 
     ##########################################################################
 
