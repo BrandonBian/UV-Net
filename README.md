@@ -1,5 +1,29 @@
 # UV-Net: Learning from Boundary Representations
 
+## Usage in cooperation with ARCS-Material-GNN trainer
+
+### Training
+```
+python classification.py train --dataset assembly_bodies --dataset_path [path to your dataset of BINs] --max_epoch 100 --batch_size 8 --experiment_name [your chosen name] --fixed_split [whether to train-test split randomly] --gpus 1
+
+# you may also add the parameter "--checkpoint [checkpoint to resume from]" if you want to resume a stopped training instance
+```
+
+- **Note 1**: if you want to use fixed train-test split ("--fixed_split True"), you need to provide the following files:
+```
+1. assemblies_train_val.txt
+2. assemblies_test.txt
+3. bodies_test.txt
+4. bodies_train_val.txt
+```
+
+### Testing (Inference)
+```
+python classification.py test --dataset assembly_bodies --dataset_path [path to your dataset of BINs] --checkpoint [best saved model to test on]
+# inference will be performed on the previously defined/generated "test.txt" (i.e., test set)
+```
+---
+
 This repository contains code for the paper:
 
 ["UV-Net: Learning from Boundary Representations."](https://arxiv.org/abs/2006.10211) Pradeep Kumar Jayaraman, Aditya Sanghi, Joseph G. Lambourne, Karl D.D. Willis, Thomas Davies, Hooman Shayani, Nigel Morris. CVPR 2021.
