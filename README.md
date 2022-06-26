@@ -30,7 +30,7 @@ python classification.py train --dataset assembly_bodies --dataset_path [dataset
 
 ### Testing (Inference)
 ```
-python classification.py test --dataset assembly_bodies --dataset_path [path to your dataset of BINs] --checkpoint [best saved model to test on]
+python classification.py test --dataset assembly_bodies --dataset_path [dataset of BINs] --checkpoint [checkpoint to load]
 # inference will be performed on the previously defined/generated "test.txt" (i.e., test set) in dataset directory
 ```
 ---
