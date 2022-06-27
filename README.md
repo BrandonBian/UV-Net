@@ -4,25 +4,38 @@
 
 ### Training
 ```
-python classification.py train --dataset assembly_bodies --dataset_path [path to your dataset of BINs] --max_epoch 100 --batch_size 8 --experiment_name [your chosen name] --fixed_split [whether to train-test split randomly] --gpus 1
-
-# you may also add the parameter "--checkpoint [checkpoint to resume from]" if you want to resume a stopped training instance
+python classification.py train --dataset assembly_bodies --dataset_path [dataset of BINs] --max_epoch 100 --batch_size 8 --experiment_name [name] --gpus 1
 ```
 
-- **Note 1**: if you want to use fixed train-test split ("--fixed_split True"), you need to provide the following files:
+- **Note 1**: list of special arguments with description
+
+```
+--dataset [mandatory]: should always be "assembly_bodies" 
+--dataset_path [mandatory]: path to your dataset of BIN files
+--experiment_name [mandatory]: choose a name for this experiment, and the results and weights will be saved in directory "results/[name]"
+
+--fixed_split [optional]: if True, then use pre-defined split generated from assembly graph split (see Note 2); if False, randomly generate splits
+--use_existing_split [optional]: if True, then use existing "train.txt" and "test.txt", making sure not to change the split
+--checkpoint [optional]: if specified, then automatically using existing "train.txt" and "test.txt", and loading model from checkpoint
+--gpus [optional]: number of gpus to use (e.g., 0 for using CPU or 1 for using a single GPU)
+```
+
+- **Note 2**: if you want to use fixed train-test split ("--fixed_split True"), you need to provide the following files, which can be generated [here](https://github.com/danielegrandi-adsk/ARCS-material-gnn/tree/main/tools/feature_encoders/random_split):
 ```
 1. assemblies_train_val.txt
 2. assemblies_test.txt
-3. bodies_test.txt
-4. bodies_train_val.txt
+3. bodies_train_val.txt
+4. bodies_test.txt
 ```
 
 ### Testing (Inference)
 ```
-python classification.py test --dataset assembly_bodies --dataset_path [path to your dataset of BINs] --checkpoint [best saved model to test on]
-# inference will be performed on the previously defined/generated "test.txt" (i.e., test set)
+python classification.py test --dataset assembly_bodies --dataset_path [dataset of BINs] --checkpoint [checkpoint to load]
+# inference will be performed on the previously defined/generated "test.txt" (i.e., test set) in dataset directory
 ```
 ---
+
+## From original repository
 
 This repository contains code for the paper:
 
