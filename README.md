@@ -15,7 +15,7 @@ python classification.py train --dataset assembly_bodies --dataset_path [dataset
 --experiment_name [mandatory]: choose a name for this experiment, and the results and weights will be saved in directory "results/[name]"
 
 --fixed_split [optional]: if True, then use pre-defined split generated from assembly graph split (see Note 2); if False, randomly generate splits
---use_previous_split [optional]: if True, then use existing "train.txt" and "test.txt", making sure not to change the split
+--use_existing_split [optional]: if True, then use existing "train.txt" and "test.txt", making sure not to change the split
 --checkpoint [optional]: if specified, then automatically using existing "train.txt" and "test.txt", and loading model from checkpoint
 --gpus [optional]: number of gpus to use (e.g., 0 for using CPU or 1 for using a single GPU)
 ```
