@@ -34,6 +34,7 @@ parser.add_argument("--dataset", choices=("assembly_bodies",), help="Dataset to 
 parser.add_argument("--dataset_path", type=str, help="Path to dataset")
 parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
 parser.add_argument("--fixed_split", type=bool, default=False, help="Fixed train-test split")
+parser.add_argument("--use_existing_split", type=bool, default=False, help="Use existing train-test split files")
 parser.add_argument(
     "--num_workers",
     type=int,
@@ -108,7 +109,7 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
     continued_training = False
 
     if args.checkpoint:
-        print("Loading from previous checkpoint - continuing previous training")
+        print("Loading from existing checkpoint - continuing previous training")
         model = Classification.load_from_checkpoint(args.checkpoint)
         continued_training = True
     else:
@@ -117,7 +118,7 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
     ##########################################################################
     """Generating our own train.txt and test.txt (randomly)"""
 
-    if not continued_training:
+    if not continued_training and not args.use_existing_split:
         train_bins, test_bins = [], []
 
         if args.fixed_split:
@@ -187,8 +188,8 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
         print("Total number of testing samples:", len(test_bins))
         print("-----------------------------------------------------------------------------------")
 
-    else:
-        print("Utilizing the train-test split from previous experiment (for continued training)")
+    if continued_training or args.use_existing_split:
+        print("Utilizing existing train-test split (no changing of train.txt and test.txt)")
 
     ##########################################################################
 

@@ -4,6 +4,7 @@ import string
 import torch
 import dgl
 from sklearn.model_selection import train_test_split
+from collections import Counter
 
 from datasets.base import BaseDataset
 
@@ -17,6 +18,16 @@ LABEL_MAPPING = {
     "Plastic": 6,
     "Wood": 7
 }
+
+
+def get_distribution(files, type):
+    labels = []
+    for file in files:
+        labels.append(str(file).split('\\')[-1].split("_sep_")[0])
+
+    cnt = Counter(labels)
+    distribution = [(i, round((cnt[i] / len(labels) * 100.0), 3)) for i, count in cnt.most_common()]
+    print(f"Distribution for [{type}] set: {distribution}")
 
 
 def _get_filenames(root_dir, filelist):
@@ -73,14 +84,18 @@ class AssemblyBodies(BaseDataset):
 
             if split == "train":
                 file_paths = train_files
+                get_distribution(file_paths, "train")
             elif split == "val":
                 file_paths = val_files
+                get_distribution(file_paths, "val")
 
         elif split == "test":
             file_paths = _get_filenames(path, filelist="test.txt")
+            get_distribution(file_paths, "test")
 
         elif split == "train_val":
             file_paths = _get_filenames(path, filelist="train.txt")
+            get_distribution(file_paths, "train_val")
 
         else:
             print("ERROR: incorrect split!")
