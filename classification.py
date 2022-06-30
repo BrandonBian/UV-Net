@@ -14,8 +14,9 @@ from tqdm import tqdm
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.metrics import ConfusionMatrix
 from sklearn.metrics import classification_report, confusion_matrix
+from pytorch_lightning.utilities.seed import seed_everything
+
 
 # from datasets.solidletters import SolidLetters
 from datasets.assemblybodies import AssemblyBodies, DROP_BODIES
@@ -90,6 +91,7 @@ else:
 
 if args.traintest == "train":
     # Train/val
+    seed_everything(workers=True)
     print(
         f"""
 -----------------------------------------------------------------------------------
