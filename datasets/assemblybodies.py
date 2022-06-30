@@ -8,19 +8,32 @@ from collections import Counter
 
 from datasets.base import BaseDataset
 
-LABEL_MAPPING = {
-    "Metal_Aluminum": 0,
-    "Metal_Ferrous": 1,
-    "Metal_Ferrous_Steel": 2,
-    "Metal_Non-Ferrous": 3,
-    "Other": 4,
-    "Paint": 5,
-    "Plastic": 6,
-    "Wood": 7
-}
+DROP_BODIES = True
+
+if not DROP_BODIES:
+    LABEL_MAPPING = {
+        "Metal_Aluminum": 0,
+        "Metal_Ferrous": 1,
+        "Metal_Ferrous_Steel": 2,
+        "Metal_Non-Ferrous": 3,
+        "Other": 4,
+        "Paint": 5,
+        "Plastic": 6,
+        "Wood": 7
+    }
+else:
+    LABEL_MAPPING = {
+        "Metal_Aluminum": 0,
+        "Metal_Ferrous": 1,
+        "Metal_Non-Ferrous": 2,
+        "Other": 3,
+        "Plastic": 4,
+        "Wood": 5
+    }
 
 
 def get_distribution(files, type):
+    """Get the distribution of labels"""
     labels = []
     for file in files:
         labels.append(str(file).split('\\')[-1].split("_sep_")[0])
@@ -32,7 +45,17 @@ def get_distribution(files, type):
 
 def _get_filenames(root_dir, filelist):
     with open(str(root_dir / f"{filelist}"), "r") as f:
-        file_list = [x.strip() for x in f.readlines()]
+        file_list_ = [x.strip() for x in f.readlines()]
+
+    if DROP_BODIES:
+        file_list = []
+        for file in file_list_:
+            label = str(file).split('\\')[-1].split("_sep_")[0]
+            if label == "Paint" or label == "Metal_Ferrous_Steel":
+                continue
+            file_list.append(file)
+    else:
+        file_list = file_list_
 
     files = list(
         x
@@ -85,6 +108,7 @@ class AssemblyBodies(BaseDataset):
             if split == "train":
                 file_paths = train_files
                 get_distribution(file_paths, "train")
+
             elif split == "val":
                 file_paths = val_files
                 get_distribution(file_paths, "val")

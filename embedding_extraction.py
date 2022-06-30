@@ -90,7 +90,7 @@ else:
 if __name__ == "__main__":
 
     """Initialization"""
-    args.checkpoint = r"results/test/0622/131533/last.ckpt"
+    args.checkpoint = r"results/drop/0627/125546/last.ckpt"
     args.dataset_path = r"process/graphs"
 
     assert (

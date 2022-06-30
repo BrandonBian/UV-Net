@@ -18,7 +18,7 @@ from pytorch_lightning.metrics import ConfusionMatrix
 from sklearn.metrics import classification_report, confusion_matrix
 
 # from datasets.solidletters import SolidLetters
-from datasets.assemblybodies import AssemblyBodies
+from datasets.assemblybodies import AssemblyBodies, DROP_BODIES
 from uvnet.models import Classification
 
 random.seed(7)
@@ -240,19 +240,29 @@ else:
     cf = confusion_matrix(y_pred=predictions, y_true=ground_truths, normalize="true")
     plt.figure(figsize=(24, 18))
 
-    label = ["Metal_Aluminum",
-             "Metal_Ferrous",
-             "Metal_Ferrous_Steel",
-             "Metal_Non-Ferrous",
-             "Other",
-             "Paint",
-             "Plastic",
-             "Wood"]
+    if not DROP_BODIES:
+        label = ["Metal_Aluminum",
+                 "Metal_Ferrous",
+                 "Metal_Ferrous_Steel",
+                 "Metal_Non-Ferrous",
+                 "Other",
+                 "Paint",
+                 "Plastic",
+                 "Wood"]
+    else:
+        label = ["Metal_Aluminum",
+                 "Metal_Ferrous",
+                 "Metal_Non-Ferrous",
+                 "Other",
+                 "Plastic",
+                 "Wood"]
 
     sn.heatmap(cf, annot=True, fmt='.2f', cmap='Blues', xticklabels=label, yticklabels=label, annot_kws={"size": 25})
     plt.xticks(size='xx-large', rotation=45)
     plt.yticks(size='xx-large', rotation=45)
     plt.tight_layout()
+
+    print("Confusion Acc = ", round(sum(cf.diagonal() / cf.sum(axis=1)) / len(cf), 3))
 
     plt.savefig(fname=f'confusion_matrix.png', format='png')
     # print("Classification results on test set:", results)
