@@ -64,12 +64,12 @@ class UVNetClassifier(nn.Module):
     """
 
     def __init__(
-        self,
-        num_classes,
-        crv_emb_dim=64,
-        srf_emb_dim=64,
-        graph_emb_dim=128,
-        dropout=0.3,
+            self,
+            num_classes,
+            crv_emb_dim=64,
+            srf_emb_dim=64,
+            graph_emb_dim=128,
+            dropout=0.3,
     ):
         """
         Initialize the UV-Net solid classification model
@@ -177,9 +177,9 @@ class Classification(pl.LightningModule):
         inputs.edata["x"] = inputs.edata["x"].permute(0, 2, 1)
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("train_loss", loss, on_step=False, on_epoch=True)
+        self.log("train_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
-        self.log("train_acc", self.train_acc(preds, labels), on_step=False, on_epoch=True)
+        self.log("train_acc", self.train_acc(preds, labels), on_step=False, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -189,9 +189,9 @@ class Classification(pl.LightningModule):
         inputs.edata["x"] = inputs.edata["x"].permute(0, 2, 1)
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
-        self.log("val_acc", self.val_acc(preds, labels), on_step=False, on_epoch=True)
+        self.log("val_acc", self.val_acc(preds, labels), on_step=False, on_epoch=True, sync_dist=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -201,9 +201,9 @@ class Classification(pl.LightningModule):
         inputs.edata["x"] = inputs.edata["x"].permute(0, 2, 1)
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("test_loss", loss, on_step=False, on_epoch=True)
+        self.log("test_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
-        self.log("test_acc", self.test_acc(preds, labels), on_step=False, on_epoch=True)
+        self.log("test_acc", self.test_acc(preds, labels), on_step=False, on_epoch=True, sync_dist=True)
         preds = torch.argmax(preds, dim=-1)
 
         return preds, labels
@@ -222,6 +222,7 @@ class Classification(pl.LightningModule):
 
         return file_names, embeddings
 
+
 ###############################################################################
 # Segmentation model
 ###############################################################################
@@ -233,13 +234,13 @@ class UVNetSegmenter(nn.Module):
     """
 
     def __init__(
-        self,
-        num_classes,
-        crv_in_channels=6,
-        crv_emb_dim=64,
-        srf_emb_dim=64,
-        graph_emb_dim=128,
-        dropout=0.3,
+            self,
+            num_classes,
+            crv_in_channels=6,
+            crv_emb_dim=64,
+            srf_emb_dim=64,
+            graph_emb_dim=128,
+            dropout=0.3,
     ):
         """
         Initialize the UV-Net solid face segmentation model
@@ -344,7 +345,7 @@ class Segmentation(pl.LightningModule):
         labels = inputs.ndata["y"]
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("train_loss", loss, on_step=False, on_epoch=True)
+        self.log("train_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
         self.train_iou(preds, labels)
         self.train_accuracy(preds, labels)
@@ -361,7 +362,7 @@ class Segmentation(pl.LightningModule):
         labels = inputs.ndata["y"]
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
         self.val_iou(preds, labels)
         self.val_accuracy(preds, labels)
@@ -378,7 +379,7 @@ class Segmentation(pl.LightningModule):
         labels = inputs.ndata["y"]
         logits = self.model(inputs)
         loss = F.cross_entropy(logits, labels, reduction="mean")
-        self.log("test_loss", loss, on_step=False, on_epoch=True)
+        self.log("test_loss", loss, on_step=False, on_epoch=True, sync_dist=True)
         preds = F.softmax(logits, dim=-1)
         self.test_iou(preds, labels)
         self.test_accuracy(preds, labels)
