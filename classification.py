@@ -266,4 +266,5 @@ else:
 
     print("Confusion Acc = ", round(sum(cf.diagonal() / cf.sum(axis=1)) / len(cf), 3))
 
+    plt.savefig(fname=f'confusion_matrix.png', format='png')
     plt.savefig(fname=f'confusion_matrix.pdf', format='pdf')
