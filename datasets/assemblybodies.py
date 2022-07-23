@@ -36,7 +36,7 @@ def get_distribution(files, type):
     """Get the distribution of labels"""
     labels = []
     for file in files:
-        labels.append(str(file).split('\\')[-1].split("_sep_")[0])
+        labels.append(str(file).split('/')[-1].split("_sep_")[0])
 
     cnt = Counter(labels)
     distribution = [(i, round((cnt[i] / len(labels) * 100.0), 3)) for i, count in cnt.most_common()]
@@ -50,7 +50,7 @@ def _get_filenames(root_dir, filelist):
     if DROP_BODIES:
         file_list = []
         for file in file_list_:
-            label = str(file).split('\\')[-1].split("_sep_")[0]
+            label = str(file).split('/')[-1].split("_sep_")[0]
             if label == "Paint" or label == "Metal_Ferrous_Steel":
                 continue
             file_list.append(file)
@@ -67,7 +67,7 @@ def _get_filenames(root_dir, filelist):
 
 
 def to_label(string):
-    label = str(string).split('\\')[-1].split("_sep_")[0]
+    label = str(string).split('/')[-1].split("_sep_")[0]
     return LABEL_MAPPING[label]
 
 

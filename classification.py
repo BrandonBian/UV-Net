@@ -126,19 +126,19 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
         if args.fixed_split:
             print("Utilizing pre-defined fixed train test split")
             # use pre-defined and fixed train-test split from dataset
-            with open(args.dataset_path + '\\' + "assemblies_train_val.txt") as f:
+            with open(args.dataset_path + '/' + "assemblies_train_val.txt") as f:
                 lines = f.readlines()
                 assemblies_train_val = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '\\' + "assemblies_test.txt") as f:
+            with open(args.dataset_path + '/' + "assemblies_test.txt") as f:
                 lines = f.readlines()
                 assemblies_test = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '\\' + "bodies_train_val.txt") as f:
+            with open(args.dataset_path + '/' + "bodies_train_val.txt") as f:
                 lines = f.readlines()
                 bodies_train_val = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '\\' + "bodies_test.txt") as f:
+            with open(args.dataset_path + '/' + "bodies_test.txt") as f:
                 lines = f.readlines()
                 bodies_test = [line.strip() for line in lines]
 
@@ -147,11 +147,12 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
                 all_bins[i] = all_bins[i].split(".bin")[0]
 
             for bin in all_bins:
-                if ".txt" in bin:
+                
+                if ".txt" in bin or "ipynb_checkpoints" in bin:
                     continue
                 assembly_id = bin.split("_sep_")[1]
                 body_id = bin.split("_sep_")[2]
-
+                
                 if assembly_id in assemblies_train_val and body_id in bodies_train_val:
                     train_bins.append(bin)
                 elif assembly_id in assemblies_test and body_id in bodies_test:
