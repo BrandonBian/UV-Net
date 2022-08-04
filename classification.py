@@ -126,19 +126,19 @@ results/{args.experiment_name}/{month_day}/{hour_min_second}/best.ckpt
         if args.fixed_split:
             print("Utilizing pre-defined fixed train test split")
             # use pre-defined and fixed train-test split from dataset
-            with open(args.dataset_path + '/' + "assemblies_train_val.txt") as f:
+            with open(args.dataset_path + '\\' + "assemblies_train_val.txt") as f:
                 lines = f.readlines()
                 assemblies_train_val = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '/' + "assemblies_test.txt") as f:
+            with open(args.dataset_path + '\\' + "assemblies_test.txt") as f:
                 lines = f.readlines()
                 assemblies_test = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '/' + "bodies_train_val.txt") as f:
+            with open(args.dataset_path + '\\' + "bodies_train_val.txt") as f:
                 lines = f.readlines()
                 bodies_train_val = [line.strip() for line in lines]
 
-            with open(args.dataset_path + '/' + "bodies_test.txt") as f:
+            with open(args.dataset_path + '\\' + "bodies_test.txt") as f:
                 lines = f.readlines()
                 bodies_test = [line.strip() for line in lines]
 
