@@ -9,6 +9,7 @@ import gc
 import numpy
 import matplotlib.pyplot as plt
 import seaborn as sn
+import pandas as pd
 
 from tqdm import tqdm
 from pytorch_lightning import Trainer
@@ -26,7 +27,14 @@ random.seed(7)
 
 gc.collect()
 torch.cuda.empty_cache()
-
+digit_material_map = {
+    0:"Metal_Aluminum",
+    1:"Metal_Ferrous",
+    2:"Metal_Non-Ferrous",
+    3:"Other",
+    4:"Plastic",
+    5:"Wood"
+}
 parser = argparse.ArgumentParser("UV-Net solid model classification")
 parser.add_argument(
     "traintest", choices=("train", "test"), help="Whether to train or test"
@@ -225,11 +233,12 @@ else:
 
     """Predictions - Classification Report & Confusion Matrix"""
 
-    predictions, ground_truths = [], []
+    predictions, ground_truths, filenames = [], [], []
 
     model.eval()
     with torch.no_grad():
         for batch in tqdm(test_loader, desc="Inference on test loader"):
+            filenames.append(batch["filename"])
             preds, labels = model.test_step(batch, None)
             preds = preds.tolist()
             labels = labels.tolist()
@@ -237,7 +246,18 @@ else:
             ground_truths.append(labels)
 
     predictions = list(numpy.concatenate(predictions).flat)
+    
     ground_truths = list(numpy.concatenate(ground_truths).flat)
+    
+    # record the body and material information, then save them into csv
+    filenames = list(numpy.concatenate(filenames).flat)
+    assembly_id = [filename.split("_sep_")[1] for filename in filenames]
+    body_id = [filename.split("_sep_")[2] for filename in filenames]
+    material = [digit_material_map[pred] for pred in predictions]
+
+    test_body_material = pd.DataFrame({"Assembly_Name":assembly_id, "Body_Name":body_id, "Material Label":material})
+    test_body_material.to_csv("UV-net_body_material.csv", index=False)
+
 
     print(classification_report(y_pred=predictions, y_true=ground_truths))
     cf = confusion_matrix(y_pred=predictions, y_true=ground_truths, normalize="true")
